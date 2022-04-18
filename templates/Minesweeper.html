@@ -1,0 +1,463 @@
+<!doctype html>
+<html>
+        <title>踩地雷</title>
+<head>
+
+                <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+                integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+        <script src="https://kit.fontawesome.com/815ec5e815.js" crossorigin="anonymous"></script>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+        <script>
+                numMines =$("select#form1").val();      //地雷的數量
+                mineWidth = 10; //踩雷區的寬度有幾格
+                mineHeight = 10;        //踩雷區的高度有幾格
+                var chk = 0;
+                numCellsClicked = 0;    //己經踩了幾個地雷
+                bombs = new Array();    //記錄地雷位置的陣列
+                record= new Array();
+                find=new Array(-1,-1,-1,0,-1,1,0,-1,0,1,1,-1,1,0,1,1);
+                var cou;
+                var Width=0
+                var Height=0
+                function run(){
+                numMines =$("select#form1").val();      //地雷的數量
+                mineWidth = 10; //踩雷區的寬度有幾格
+                mineHeight = 10;        //踩雷區的高度有幾格
+                var chk = 0;
+                numCellsClicked = 0;    //己經踩了幾個地雷
+                bombs = new Array();    //記錄地雷位置的陣列
+                record= new Array();
+                find=new Array(-1,-1,-1,0,-1,1,0,-1,0,1,1,-1,1,0,1,1);
+                var cou;
+                        mine = document.getElementById('mine'); //先取得踩雷區
+
+                        for (i = 0; i != mineWidth; i++) {
+                                for (j = 0; j != mineHeight; j++) {
+                                        cell = document.createElement('button');//產生button元件
+                                        cell.setAttribute('id', i + '_' + j);  //由座標給它id
+                                        cell.setAttribute('onclick', 'sweep(this)');    //滑鼠左鍵按下就執行sweep()
+                                        cell.setAttribute('oncontextmenu', 'mark(this)');       //按右鍵進行標記
+                                        cell.innerHTML = '&nbsp;';      //預設的內容文字是空白
+                                        mine.appendChild(cell);         //把按鈕附加到踩雷區
+                                }
+
+                                mine.innerHTML = mine.innerHTML + '<BR/>';     //折到下一行
+                        }
+
+                        document.getElementById('remain').innerHTML = numMines;//改變remain的內容
+
+                        for (i = 0; i != mineWidth; i++) {      //設定地雷陣列的預設值為0
+                                bombs[i] = new Array();
+                                for (j = 0; j != mineHeight; j++) {
+                                        bombs[i][j] = 0;
+                                }
+                        }
+                }
+                function rand(q) {
+                        return Math.floor(Math.random() * (q));
+                }
+                function sweep(obj) {
+                        current_i = parseInt(obj.id.split('_')[0]);     //obj的row座標
+                        current_j = parseInt(obj.id.split('_')[1]);     //obj的column座標
+                        if (numCellsClicked == 0) {
+                                timer();        //第一次踩雷, 開始讀秒
+                                count = 0;
+                                while (count != numMines) {     //用亂數配置地雷
+                                        i = rand(mineWidth);
+                                        j = rand(mineHeight);
+                                        if (bombs[i][j] != 1 && i != current_i && j != current_j) {
+                                                count++;
+                                                bombs[i][j] = 1;
+                                                record.push(i)
+                                                record.push(j)
+
+                                        }
+                                }
+
+                                }
+
+
+                        if (obj.innerHTML == '<i></i>') //己經標記了
+                                return;
+
+                        if (bombs[current_i][current_j] == 1) { //踩到地雷
+                                clearTimeout(gameTimer);
+                                alert("你踩到到地雷了,遊戲結束");
+                                //obj.innerHTML = 'X';
+                                $('#' + current_i + '_' + current_j).html('X')
+                                for(var i=0;i<=record.length;i+=2)
+                                {
+
+                                        $('#' + record[i]+ '_' + record[i+1]).html('X')
+                                        $('#' + record[i]+ '_' + record[i+1]).removeClass('far fa-flag')
+                                        $('#' + record[i]+ '_' + record[i+1]).removeClass('text')
+                                        $('#' + record[i]+ '_' + record[i+1]).addClass('text1')
+
+                                }
+                                $("button").attr('disabled', true)
+
+
+                                return;
+                        }
+
+                        numCellsClicked++;      //踩過的數量加一
+
+                        sum = 0;
+                        if (current_i - 1 >= 0) {       //計算上一個row的地雷總和
+                                sum = sum + bombs[current_i - 1][current_j];
+                                if (current_j - 1 >= 0) //如果不在最左邊
+                                        sum = sum + bombs[current_i - 1][current_j - 1];
+                                if (current_j + 1 < mineWidth)  //如果不是最右邊
+                                        sum = sum + bombs[current_i - 1][current_j + 1];
+                        }
+                        if (current_i + 1 < mineHeight) {       //計算下一個row的地雷總和
+                                sum = sum + bombs[current_i + 1][current_j];
+                                if (current_j - 1 >= 0)
+                                        sum = sum + bombs[current_i + 1][current_j - 1];
+                                if (current_j + 1 < mineWidth)
+                                        sum = sum + bombs[current_i + 1][current_j + 1];
+                        }
+                        if (current_j - 1 >= 0) //加上左邊的
+                                sum = sum + bombs[current_i][current_j - 1];
+                        if (current_j + 1 < mineWidth)  //加上右邊的
+                                sum = sum + bombs[current_i][current_j + 1];
+                        if (sum == 0) {
+                                $('#' + current_i + '_' + current_j).html('&nbsp');
+                                find1(current_i,current_j)
+                                numCellsClicked--;
+                        }
+                        else {
+                                $('#' + current_i + '_' + current_j).html(sum);
+                                $('#' + current_i + '_' + current_j).removeClass('text')
+                                var class1=String('text'+(sum+1));
+                                        $('#' + current_i + '_' + current_j).addClass(class1);
+                                        $('#' + current_i + '_' + current_j).removeClass('far fa-flag')
+
+
+                        }
+                        obj.setAttribute('disabled', 'disabled');
+
+                        if (numCellsClicked == mineWidth * mineHeight - numMines) {     //破關
+                                alert('破關!');
+                                clearTimeout(gameTimer);
+                        }
+                }
+                function timer() {
+                        timer1 = document.getElementById('timer');      //取得計數器
+
+                        if (timer1.innerHTML >= 0 && chk == 0) {
+                        timer1.innerHTML = parseInt(timer1.innerHTML) - 1;     //把裡面的值加1
+                                gameTimer = setTimeout('timer()', 1000);
+                        }//設定定時器, 每一秒執行一次timer()
+                        if (timer1.innerHTML < 0 && chk == 0) {
+                                chk++;
+                                $("button").attr('disabled', true);
+
+                                alert("時間到了,遊戲結束");
+                                timer1.innerHTML = parseInt(timer1.innerHTML) + 1
+                                return;
+                        }
+
+
+                }
+                function mark(obj) {
+                        marked = document.getElementById('remain');
+                        if (obj.innerHTML == '<i></i>') {       //取消標記
+                                obj.removeAttribute('disabled');        //取消disabled
+                                $(obj, i).removeClass("far fa-flag")
+                                obj.innerHTML = '&nbsp;';       //還原內容
+                                if (parseInt(marked.innerHTML) - 1 >= -100)
+                                        marked.innerHTML = parseInt(marked.innerHTML) + 1;
+                        } else {
+                                obj.innerHTML = '<i></i>';
+                                $(obj, i).addClass("far fa-flag")
+                                marked.innerHTML = parseInt(marked.innerHTML) - 1;
+                        }
+
+                }
+                function check(current_i,current_j) {
+                        var sum=0;
+                                if (current_i - 1 >= 0) {       //計算上一個row的地雷總和
+                                        sum = sum + bombs[current_i - 1][current_j];
+                                        if (current_j - 1 >= 0) //如果不在最左邊
+                                                sum = sum + bombs[current_i - 1][current_j - 1];
+                                        if (current_j + 1 < mineWidth)  //如果不是最右邊
+                                                sum = sum + bombs[current_i - 1][current_j + 1];
+                                }
+                                if (current_i + 1 < mineHeight) {       //計算下一個row的地雷總和
+                                        sum = sum + bombs[current_i + 1][current_j];
+                                        if (current_j - 1 >= 0)
+                                                sum = sum + bombs[current_i + 1][current_j - 1];
+                                        if (current_j + 1 < mineWidth)
+                                                sum = sum + bombs[current_i + 1][current_j + 1];
+                                }
+                                if (current_j - 1 >= 0) //加上左邊的
+                                        sum = sum + bombs[current_i][current_j - 1];
+                                if (current_j + 1 < mineWidth)  //加上右邊的
+                                        sum = sum + bombs[current_i][current_j + 1];
+                                        return sum;
+                        }
+
+                        function find1(current_i,current_j) {
+                                var j=0;
+                                if(current_i<0 || current_i>=10 || current_j<0 || current_j>=10 || $('#' + current_i+ '_' + current_j).prop("disabled") ||$('#' + current_i+ '_' + current_j).hasClass('far fa-flag') )
+                                {
+                                        return;
+                                }
+                                var sum=check(current_i,current_j);
+                                if(sum==0)
+                                {
+                                        if(!$('#' + current_i+ '_' + current_j).prop("disabled"))
+                                        {numCellsClicked++
+                                        }
+
+                                        $('#' + current_i+ '_' + current_j).attr('disabled', true)
+                                        for(j=0;j<find.length;j+=2)
+                                        {
+
+                                                find1(current_i+find[j],current_j+find[j+1])
+
+
+                                        }
+                                        return;
+
+                                }
+                                else
+                                {
+                                        if(!$('#' + current_i+ '_' + current_j).prop("disabled"))
+                                        {numCellsClicked++
+                                        }
+
+                                        $('#' + current_i+ '_' + current_j).html(sum)
+                                        $('#' + current_i+ '_' + current_j).attr('disabled', true)
+                                        $('#' + current_i+ '_' + current_j).removeClass("text")
+                                        var class1=String('text'+(sum+1));
+                                        $('#' + current_i + '_' + current_j).addClass(class1);
+                                        $('#' + current_i + '_' + current_j).removeClass('far fa-flag')
+
+
+                                        return;
+
+
+                                }
+
+                        }
+
+        </script>
+        <style>
+                body{
+                        color:black;
+
+                }
+                #a {
+                        width: 640px;
+                        margin: 0 auto;
+                }
+                #b {
+
+                        width: 200px;
+                        margin: 0 auto;
+                }
+
+                .clicked {
+
+                        background-color: grey;
+                }
+
+                #remain {
+                        font-size: 32px;
+                        font-family: Microsoft JhengHei;
+                        width: 300px;
+                        height: auto;
+                        float: left;
+                        display: inline
+                }
+
+                #timer {
+                        font-size: 32px;
+                        font-family: Microsoft JhengHei;
+                        width: 300px;
+                        height: auto;
+                        float: left;
+                        display: inline
+                }
+
+                #mines {
+                        font-size: 30px;
+                        font-family: Microsoft JhengHei;
+                        width: 300px;
+                        height: auto;
+                        float: left;
+                        display: inline
+                }
+
+                #Time {
+                        font-size: 32px;
+                        font-family: Microsoft JhengHei;
+                        width: 300px;
+                        height: auto;
+                        float: left;
+                        display: inline
+                }
+
+                #return {
+                        margin: 0 auto;
+                        width: 600px;
+                        height: auto;
+                        float: left;
+                        display: inline
+                }
+
+                button[disabled=disabled] {
+                        background-color:       #CD853F ;
+                }
+
+                * {
+                        position: relative;
+                        font-size: 30px;
+                        font-family: Microsoft JhengHei;
+                }
+
+                .box {
+                        margin-left: auto;
+                        margin-right: auto;
+                }
+
+                button {
+                        border-radius: 4px;
+                        margin: 1px;
+                        width: 60px;
+                        height: 60px;
+                        cursor: pointer;
+                        background-color:green;
+                }
+                .button1 {
+                        border-radius: 4px;
+                        margin: 1px;
+                        width: 60px;
+                        height: 60px;
+                        cursor: pointer;
+                        background-color:#77FF00;
+                }
+                button:hover {
+                        box-shadow: 0px 0px 0px 0.2px;
+                }
+
+                .clicked {
+                        background-color: grey;
+                }
+                body{
+                        color:white;
+
+                }
+                .text
+                {
+                        text-indent:-9999px;white-space:nowrap;line-height:0;
+                }
+                #game
+                {
+                        font-size: 32px;
+                        font-family: Microsoft JhengHei;
+                        width: 200px;
+                        height: auto;
+                        float: left;
+                        display: inline;
+                        color:block
+                }
+                #form
+                {
+                        font-size: 32px;
+                        font-family: Microsoft JhengHei;
+                        width: 200px;
+                        height: auto;
+                        float: left;
+                        display: inline;
+                        color:block
+                }
+                #start
+                {
+                        font-size: 32px;
+                        font-family: Microsoft JhengHei;
+                        width: 200px;
+                        height: auto;
+                        float: left;
+                        display: inline;
+                        color:block;
+                        background-color:#AAAAAA;
+
+
+                }
+                .text1
+                {
+                        color: black;
+                }
+                .text2
+                {
+                        color: #FFFF00  ;
+                }
+                .text3
+                {
+                        color:  #D1BBFF ;
+                }
+                .text4
+                {
+                        color: #FF3333;
+                }
+                .text5
+                {
+                        color: #0000CC  ;
+                }
+                .text6
+                {
+                        color: #FF3333;
+                }
+                .text7
+                {
+                        color: #FF5511;
+                }
+                .text8
+                {
+                        color: #FF77FF;
+                }
+                .text9
+                {
+                        color: #FFB3FF;
+                }
+
+        </style>
+</head>
+
+<body  onContextMenu="window.event.returnValue=false"  onSelectStart="event.returnValue=false" background="./wilderness.jpg" >
+        <div id="a">
+
+                        <div id="game" style="color:black;">難度選擇</div>
+                        <div id="form" style="color:black;"><select id = "form1" name="YourLocation">
+                                        　<option value="10">簡單</option>
+                                        　<option value="20">中等</option>
+                                        　<option value="30">困難</option></select></div>
+                        <div id="start1" style="color:black;"><button id="start" onclick="run()" >開始遊戲</button></div>
+
+                <div id="mine">
+                <div id="Time"style="color:black;"><i class="far fa-clock"></i>Time</div>
+                <div id="timer" style="color:black;">120</div>
+                <div id="mines" style="color:black;"><i class="far fa-flag"></i>Remaining mines</div>
+                <div id="remain" style="color:black;">10</div>
+                <div id="return">
+
+
+                        <a href="javascript:window.location.reload()"style="color:black;"><i class="fas fa-undo-alt"></i>one more
+                                time</a>
+                </div>
+        </div>
+        <script>
+                $("select#form1").change(function(){
+
+                        $("#remain").html($(this).val())
+                });
+        </script>
+
+
+</body>
+
+</html>

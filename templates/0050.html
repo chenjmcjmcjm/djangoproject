@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>0050指數</title>
+    <style>
+        body {
+            font-family:'Microsoft JhengHei', '微軟正黑體', 'Microsoft YaHei', sans-serif;
+        }
+        input{
+            width: 50%;
+            padding: 10px 15px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+        .big-background{
+            width: 90%;  
+            height: 90%;  
+        }
+        .big-background{
+            width: 100%;  
+            height: 100%;  
+        }
+        .connect-background{
+            width: 50%;  
+            height: 50%;
+            margin:0 auto;  
+        }
+        #InputButton{
+            width: 50%;  
+            height: 50%;
+            margin:0 auto; 
+            
+        }
+    </style>
+    <script>
+        function check(){
+            starttime=document.getElementById("starttime").value
+            endtime=document.getElementById("endtime").value
+            alert(starttime+" "+endtime)
+            return true;
+        } 
+        
+    </script>
+<body>
+    <div class="big-background">
+        <div class="connect-background">
+            <form method="POST" action='/0050post/' onSubmit="return check();">
+                <legend>請選擇回測時間:</legend>
+                {% csrf_token %}
+                <p>
+                開始期間:
+                <input type="date" class="time" required id="starttime" name="starttime"> 
+                </p>
+                <p>
+                結束期間:
+                <input type="date" class="time" id="endtime" required name="endtime">
+                <div id="InputButton">
+                <input type="Submit" value="送出"  >
+                 <input type="reset" value="重置">
+                 </div>
+                
+                </p>
+            </form>
+        </div>
+        <div id="show">
+            {{showstart}}
+            {{showend}}
+        </div>
+    </div>
+</body>
+</head>
